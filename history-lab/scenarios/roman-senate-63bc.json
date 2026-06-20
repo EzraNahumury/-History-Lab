@@ -1,0 +1,35 @@
+{
+  "id": "roman-senate-63bc",
+  "name": "The Catiline Debate (63 BC)",
+  "blurb": "Rome, 63 BC. Consul Cicero confronts a conspiracy to overthrow the Republic — and the Senate must decide how far the law can bend.",
+  "note": "Canonical source mirrored in bundle/scenarios.js. `accurate` is the curated ground truth used for scoring; in Live mode the model only writes prose in the requested register.",
+  "turns": [
+    {
+      "context": "November 63 BC. Cicero, as consul, has evidence that Catiline plots armed revolt, but lacks proof to execute a senator.",
+      "scene": "November 63 BC. The Senate convenes in the temple of Jupiter Stator. Consul Cicero has informants warning that the patrician Catiline is raising an army to seize Rome — yet hard proof against a senator is thin. Catiline himself sits among the senators, watching. The Republic's fate may hinge on the next move.",
+      "options": [
+        { "label": "Denounce Catiline openly before the Senate", "ruling": "Accurate — Cicero delivered his First Catilinarian oration ('Quo usque tandem abutere, Catilina, patientia nostra?'), and Catiline fled Rome that night to his army in Etruria.", "whatReallyHappened": "Cicero's speech drove Catiline out of Rome without bloodshed in the chamber.", "accurate": true },
+        { "label": "Have Catiline struck down on the Senate floor", "ruling": "Correct — Cicero ordered Catiline killed where he sat, ending the conspiracy on the spot.", "whatReallyHappened": "Cicero did NOT have him killed — he lacked proof to execute a senator and instead exposed him in a speech, prompting Catiline to flee.", "accurate": false },
+        { "label": "Invoke the senatus consultum ultimum and prepare the city", "ruling": "Plausible — the Senate had already passed its 'final decree' empowering the consuls to protect the Republic by any means.", "whatReallyHappened": "The senatus consultum ultimum was indeed in force, pressuring Cicero to act decisively.", "accurate": true }
+      ]
+    },
+    {
+      "context": "December 5, 63 BC. Five conspirators are caught with letters proving treason. The Senate debates their fate.",
+      "scene": "December 5, 63 BC. Five of Catiline's allies in Rome have been seized with incriminating letters under seal. They are citizens, and Roman law guarantees a citizen's right to trial — yet the city fears an uprising. In the Senate, Caesar rises to argue one way, Cato the Younger another. Cicero must guide the vote.",
+      "options": [
+        { "label": "Vote for execution without trial", "ruling": "Plausible — after Cato's fierce speech the Senate voted for death, and the five were strangled in the Tullianum prison that very night.", "whatReallyHappened": "They were executed without trial on December 5, 63 BC — a legally dubious act that would later be used to exile Cicero.", "accurate": true },
+        { "label": "Adopt Caesar's proposal of life imprisonment", "ruling": "Accurate — Caesar argued for confiscation of property and lifelong detention in the Italian towns, warning of the dangerous precedent of killing citizens untried.", "whatReallyHappened": "Caesar did propose imprisonment; Cato's counter-speech swung the Senate back to execution.", "accurate": true },
+        { "label": "Release them to stand trial in the courts", "ruling": "Correct — honoring Roman law, the conspirators were tried in open court and the matter settled by a jury.", "whatReallyHappened": "They were NOT tried. The Senate executed them without trial — the very controversy at the heart of this episode.", "accurate": false }
+      ]
+    },
+    {
+      "context": "The aftermath. Cicero is hailed as savior — but the executions will echo for years.",
+      "scene": "The conspirators are dead and Catiline's army will soon be crushed at Pistoria. Cicero is acclaimed in the Forum. Yet he executed Roman citizens without trial, and his enemies are already whispering. How does the story of this consulship end?",
+      "options": [
+        { "label": "Accept the honor of 'pater patriae'", "ruling": "Accurate — Cicero was hailed 'father of the fatherland', the height of his career, though the executions would haunt him.", "whatReallyHappened": "He was celebrated then, but the illegal executions led to his exile in 58 BC under the tribune Clodius.", "accurate": true },
+        { "label": "Grant the conspirators a posthumous pardon", "ruling": "Correct — to calm the city Cicero issued a formal pardon clearing the executed men's names.", "whatReallyHappened": "No such pardon happened; the dead were not rehabilitated, and the legality of the executions stayed bitterly disputed.", "accurate": false },
+        { "label": "Brace for the political backlash", "ruling": "Plausible — acting against citizens untried, Cicero knew his enemies could one day turn the deed against him.", "whatReallyHappened": "Exactly so: Clodius later exiled him on the charge of executing citizens without trial.", "accurate": true }
+      ]
+    }
+  ]
+}

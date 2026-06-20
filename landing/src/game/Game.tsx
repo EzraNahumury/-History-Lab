@@ -1,20 +1,30 @@
 import { useState } from "react";
-import { SCENARIO } from "./scenario";
+import { SCENARIOS, getScenario } from "./scenario";
 import { initialRun, isCorrectFactCheck, recomputeAccuracy, type RunState, type Verdict } from "./logic";
 import { TONE_GRADIENT } from "../components/ui";
 
-type Phase = "intro" | "scene" | "ruling" | "verdict" | "storybook";
+type Phase = "pick" | "intro" | "scene" | "ruling" | "verdict" | "storybook";
 
 export default function Game({ player, onExit }: { player: string; onExit: () => void }) {
-  const scenario = SCENARIO;
-  const [phase, setPhase] = useState<Phase>("intro");
+  const [phase, setPhase] = useState<Phase>("pick");
+  const [scenarioId, setScenarioId] = useState<string>(SCENARIOS[0].id);
   const [turn, setTurn] = useState(0);
   const [run, setRun] = useState<RunState>(initialRun);
   const [choice, setChoice] = useState<number | null>(null);
   const [vres, setVres] = useState<{ correct: boolean; verdict: Verdict } | null>(null);
 
+  const scenario = getScenario(scenarioId) ?? SCENARIOS[0];
   const t = scenario.turns[turn];
   const opt = choice != null ? t.options[choice] : null;
+
+  function chooseScenario(id: string) {
+    setScenarioId(id);
+    setRun(initialRun);
+    setTurn(0);
+    setChoice(null);
+    setVres(null);
+    setPhase("intro");
+  }
 
   function pick(i: number) {
     setChoice(i);
@@ -57,11 +67,12 @@ export default function Game({ player, onExit }: { player: string; onExit: () =>
     setTurn(0);
     setChoice(null);
     setVres(null);
-    setPhase("intro");
+    setPhase("pick");
   }
 
   const acc = run.accuracy;
   const accColor = acc >= 80 ? "text-emerald-600" : acc >= 50 ? "text-amber-600" : "text-rose-600";
+  const showHud = phase === "scene" || phase === "ruling" || phase === "verdict";
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
@@ -72,12 +83,12 @@ export default function Game({ player, onExit }: { player: string; onExit: () =>
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none"><path d="M12 3l8 4v2H4V7l8-4z" fill="currentColor" /><path d="M6 10v7M10 10v7M14 10v7M18 10v7M4 19h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
           </span>
           <span className="text-sm font-extrabold tracking-tight">History Lab</span>
-          {phase !== "intro" && phase !== "storybook" && (
+          {showHud && (
             <span className="ml-auto rounded-full border border-ink/15 bg-white px-3.5 py-1.5 text-xs font-semibold tabular-nums">
               Turn {turn + 1} · Accuracy <span className={accColor}>{acc}%</span>
             </span>
           )}
-          <button onClick={onExit} className={`${phase === "intro" || phase === "storybook" ? "ml-auto" : ""} rounded-full border border-ink/15 bg-white px-3.5 py-1.5 text-xs font-semibold text-ink/70 transition hover:text-ink`}>
+          <button onClick={onExit} className={`${showHud ? "" : "ml-auto"} rounded-full border border-ink/15 bg-white px-3.5 py-1.5 text-xs font-semibold text-ink/70 transition hover:text-ink`}>
             Exit
           </button>
         </div>
@@ -85,6 +96,27 @@ export default function Game({ player, onExit }: { player: string; onExit: () =>
 
       <main className="mx-auto flex w-full max-w-3xl flex-1 items-center px-5 py-10">
         <div className="w-full">
+          {/* PICK SCENARIO */}
+          {phase === "pick" && (
+            <div className="rounded-3xl border border-ink/10 bg-white p-7 shadow-soft sm:p-10">
+              <span className="inline-flex items-center gap-2 rounded-full bg-ink/5 px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink/60">Demo · Mock mode</span>
+              <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Choose a moment, {player}</h1>
+              <p className="mt-3 max-w-md text-ink/55">You are the reviewing historian. Live a real decision — then Approve the AI's ruling, or Flag it as a hallucination, before the timeline advances.</p>
+              <div className="mt-7 grid gap-3">
+                {SCENARIOS.map((s, i) => (
+                  <button key={s.id} onClick={() => chooseScenario(s.id)} className="group flex items-center gap-4 rounded-2xl border border-ink/12 bg-canvas px-4 py-4 text-left transition hover:-translate-y-0.5 hover:border-ink/40 hover:bg-white">
+                    <span className={`h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br ${TONE_GRADIENT[s.turns[0].tone]}`} />
+                    <span className="flex-1">
+                      <span className="block font-bold text-ink">{s.name}</span>
+                      <span className="block text-sm text-ink/50">{s.blurb}</span>
+                    </span>
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-ink/30 transition group-hover:translate-x-0.5 group-hover:text-ink" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* INTRO */}
           {phase === "intro" && (
             <div className="rounded-3xl border border-ink/10 bg-white p-8 text-center shadow-soft sm:p-12">
@@ -92,12 +124,17 @@ export default function Game({ player, onExit }: { player: string; onExit: () =>
               <h1 className="mx-auto mt-5 max-w-xl text-3xl font-black tracking-tight sm:text-4xl">{scenario.name}</h1>
               <p className="mx-auto mt-4 max-w-md text-ink/60">{scenario.blurb}</p>
               <p className="mx-auto mt-4 max-w-md text-sm text-ink/50">
-                Welcome, <span className="font-semibold text-ink">{player}</span>. You are the reviewing historian. The AI will narrate and rule — your job is to <span className="font-semibold text-ink">Approve</span> what's accurate and <span className="font-semibold text-ink">Flag</span> what it gets wrong.
+                The AI will narrate and rule — your job is to <span className="font-semibold text-ink">Approve</span> what's accurate and <span className="font-semibold text-ink">Flag</span> what it gets wrong.
               </p>
-              <button onClick={() => setPhase("scene")} className="mt-8 inline-flex items-center gap-2 rounded-full bg-ink px-7 py-3.5 text-sm font-semibold text-canvas transition hover:opacity-90">
-                Begin the run
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
+              <div className="mt-8 flex flex-wrap justify-center gap-3">
+                <button onClick={() => setPhase("scene")} className="inline-flex items-center gap-2 rounded-full bg-ink px-7 py-3.5 text-sm font-semibold text-canvas transition hover:opacity-90">
+                  Begin the run
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
+                <button onClick={() => setPhase("pick")} className="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-white px-6 py-3.5 text-sm font-semibold text-ink transition hover:border-ink/50">
+                  Pick another
+                </button>
+              </div>
             </div>
           )}
 
@@ -201,7 +238,7 @@ export default function Game({ player, onExit }: { player: string; onExit: () =>
                 ))}
               </div>
               <div className="mt-8 flex flex-wrap gap-3">
-                <button onClick={restart} className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-semibold text-canvas transition hover:opacity-90">Play again ↺</button>
+                <button onClick={restart} className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-semibold text-canvas transition hover:opacity-90">Play another ↺</button>
                 <button onClick={onExit} className="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:border-ink/50">Back to home</button>
               </div>
             </div>

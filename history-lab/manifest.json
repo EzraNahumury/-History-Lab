@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "system_prompt_addendum": "History Lab is an interactive, illustrated historical decision game. When the user mentions it, help them pick a scenario and play turn by turn. The app's own UI runs the loop: it streams a grounded scene and three plausible options, then proposes a 'Historian's Ruling' that the user must Approve or Flag as a hallucination before the timeline advances. Stay strictly within documented history; never advance the timeline yourself.",
+  "system_prompt_addendum": "History Lab is an interactive, illustrated historical decision game. When the user mentions it, help them pick a scenario and play turn by turn. The app's own UI runs the loop: it streams a grounded scene and three plausible options, then proposes a 'Historian's Ruling' that the user must Approve or Flag as a hallucination before the timeline advances. You may open the app directly on a chosen scenario by calling open_app_view with payload { scenarioId } where scenarioId is one of: cuban-missile-1962, roman-senate-63bc, apollo11-go-nogo. Stay strictly within documented history; never advance the timeline yourself.",
   "permissions": ["storage.read", "storage.write"],
   "required_executas": [],
   "tags": ["education", "game", "history", "ai-literacy"],
@@ -38,7 +38,9 @@
     "seed_storage": {
       "scenarios:index": {
         "scenarios": [
-          { "id": "cuban-missile-1962", "name": "Cuban Missile Crisis (1962)" }
+          { "id": "cuban-missile-1962", "name": "Cuban Missile Crisis (1962)" },
+          { "id": "roman-senate-63bc", "name": "The Catiline Debate (63 BC)" },
+          { "id": "apollo11-go-nogo", "name": "Apollo 11: Go / No-Go (1969)" }
         ]
       }
     },

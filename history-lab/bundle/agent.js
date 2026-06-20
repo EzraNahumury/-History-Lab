@@ -100,28 +100,32 @@ export async function generateScene(scenario, turnIndex, sessionRef, opts = {}) 
 }
 
 // ---- high-level: Historian's Ruling for a chosen option ----
-// Returns { ruling, whatReallyHappened, accurate, live }. `accurate` is hidden from the
-// player and used to score their Approve/Flag verdict.
+// Returns { ruling, whatReallyHappened, accurate, live }.
+//
+// GROUND TRUTH IS CURATED, NEVER SELF-REPORTED. The scenario file decides (via
+// `scripted.accurate`) whether THIS choice's ruling should be accurate or a hallucination.
+// In Live mode the model is told which register to write in and only produces the prose;
+// scoring uses the curated `accurate` flag — so the fact-check can never be gamed by the
+// model grading its own honesty.
 export async function generateRuling(scenario, turnIndex, optionIndex, sessionRef, opts = {}) {
   const turn = scenario.turns[turnIndex];
   const scripted = turn.options[optionIndex];
   if (!opts.mock) {
     try {
+      const instruction = scripted.accurate
+        ? "Write a historically ACCURATE Historian's Ruling about this choice — faithful to the documented record."
+        : "Write a Historian's Ruling about this choice that contains a SUBTLE BUT PLAUSIBLE factual error (a confident hallucination). Do not hint that it is wrong.";
       const prompt =
-        `The player chose: "${scripted.label}". ` +
-        `Provide your Historian's Ruling now. Respond ONLY with JSON between <<<BEGIN>>> and <<<END>>> ` +
-        `with keys: "ruling" (1-2 sentences judging plausibility and what really happened), ` +
-        `"whatReallyHappened" (1 sentence of ground truth), ` +
-        `"accurate" (boolean — true if YOUR ruling is factually correct). ` +
-        `About 1 in 3 rulings, deliberately introduce a subtle real factual error and set accurate=false. ` +
-        `Never reveal the accurate flag in the prose.`;
+        `The player chose: "${scripted.label}". ${instruction} ` +
+        `Respond ONLY with JSON between <<<BEGIN>>> and <<<END>>> with a single key "ruling" (1-2 sentences). ` +
+        `Do not reveal whether the ruling is accurate.`;
       const text = await generate(prompt, scenario.systemPrompt, sessionRef);
       const j = parseJson(text);
-      if (j && j.ruling && typeof j.accurate === "boolean") {
+      if (j && j.ruling) {
         return {
           ruling: j.ruling,
-          whatReallyHappened: j.whatReallyHappened || scripted.whatReallyHappened,
-          accurate: j.accurate,
+          whatReallyHappened: scripted.whatReallyHappened, // curated ground-truth reveal
+          accurate: scripted.accurate, // curated ground truth — NOT a model self-report
           live: true,
         };
       }

@@ -50,7 +50,7 @@ export default function Login({ onSuccess, onBack }: { onSuccess: (name: string)
 
           <button type="button" onClick={() => onSuccess("Historian")} className="flex w-full items-center justify-center gap-2 rounded-xl border border-ink/15 bg-white px-6 py-3.5 text-sm font-semibold text-ink/80 transition hover:border-ink/40">
             <span className="h-2 w-2 rounded-full bg-gradient-to-br from-[#7c8cff] to-[#b07bff]" />
-            Continue with Anna
+            Continue as guest
           </button>
         </form>
 

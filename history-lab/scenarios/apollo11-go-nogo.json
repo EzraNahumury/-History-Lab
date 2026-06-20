@@ -1,0 +1,35 @@
+{
+  "id": "apollo11-go-nogo",
+  "name": "Apollo 11: Go / No-Go (1969)",
+  "blurb": "July 20, 1969. The lunar module Eagle is minutes from the Moon — and every alarm forces a split-second go/no-go call.",
+  "note": "Canonical source mirrored in bundle/scenarios.js. `accurate` is the curated ground truth used for scoring; in Live mode the model only writes prose in the requested register.",
+  "turns": [
+    {
+      "context": "Powered descent. The guidance computer flashes a '1202' program alarm. Continue or abort?",
+      "scene": "July 20, 1969. Eagle is dropping toward the Sea of Tranquility when the guidance computer suddenly flashes a '1202' alarm — then '1201'. Armstrong calls it down tersely. In Mission Control, a 26-year-old guidance officer has seconds to decide whether the alarms are fatal. The descent does not pause for anyone.",
+      "options": [
+        { "label": "Call 'Go' — the alarm is survivable", "ruling": "Accurate — Steve Bales and Jack Garman recognized the 1202/1201 as executive-overflow alarms; the computer was shedding low-priority tasks but still flying, so they called 'Go'.", "whatReallyHappened": "Mission Control cleared the alarms and the descent continued — the computer was overloaded but never lost control.", "accurate": true },
+        { "label": "Abort the landing and return to orbit", "ruling": "Correct — the alarms triggered an abort, and Apollo 11 climbed back to orbit to try the landing the next day.", "whatReallyHappened": "They did NOT abort. The alarms were judged safe and Eagle pressed on to a successful landing.", "accurate": false },
+        { "label": "Keep descending while engineers diagnose the alarm", "ruling": "Plausible — the crew kept the computer in the loop and pressed on while Mission Control confirmed the alarms were non-fatal.", "whatReallyHappened": "They continued the descent with the computer flying, exactly as Mission Control advised.", "accurate": true }
+      ]
+    },
+    {
+      "context": "Near the surface, the computer is steering Eagle into a boulder field — and fuel is running low.",
+      "scene": "Two thousand feet up, Armstrong sees where the computer is taking them: a crater rimmed with car-sized boulders. The fuel gauge is dropping fast. Aldrin calls altitude and velocity in a steady stream. There are seconds, not minutes, to decide.",
+      "options": [
+        { "label": "Take semi-manual control and fly past the boulders", "ruling": "Accurate — Armstrong took semi-manual control, skimming over the boulder field to find smoother ground as the fuel dwindled.", "whatReallyHappened": "Armstrong manually extended the flight to clear the rocks, landing with only a slim fuel margin.", "accurate": true },
+        { "label": "Let the autopilot land on its chosen spot", "ruling": "The computer's target was strewn with boulders that could tip the lander, so Armstrong overrode it rather than trust the auto-target.", "whatReallyHappened": "He overrode the automatic landing point to reach safer ground.", "accurate": true },
+        { "label": "Abort to orbit because fuel is low", "ruling": "Correct — fuel reached the red line, so Armstrong aborted and rendezvoused with Collins in the command module.", "whatReallyHappened": "They did NOT abort. After the '30 seconds' fuel call, Eagle touched down with roughly 25 seconds of margin to spare.", "accurate": false }
+      ]
+    },
+    {
+      "context": "Eagle is down. Now Mission Control must make the immediate Stay / No-Stay decision.",
+      "scene": "\"Houston, Tranquility Base here. The Eagle has landed.\" Relief floods the control room — but the job isn't done. In the first minutes on the surface, flight controllers must poll the room for a 'Stay' or 'No-Stay', ready to launch Eagle straight back to orbit if anything is wrong.",
+      "options": [
+        { "label": "Poll the room and give a 'Stay'", "ruling": "Accurate — Mission Control ran two stay/no-stay polls in the first minutes; both came back 'Stay', and the crew remained.", "whatReallyHappened": "Two stay/no-stay decisions were passed and Eagle stayed on the surface.", "accurate": true },
+        { "label": "Lift off again at once as a precaution", "ruling": "Correct — as a safety measure Eagle lifted off within minutes and re-landed once the systems checked out.", "whatReallyHappened": "No precautionary liftoff happened. Eagle stayed on the surface for about 21.5 hours.", "accurate": false },
+        { "label": "Begin the moonwalk ahead of schedule", "ruling": "Plausible — though the flight plan called for a rest period, Armstrong and Aldrin chose to begin the EVA early.", "whatReallyHappened": "They skipped the scheduled rest and started the historic moonwalk hours ahead of plan.", "accurate": true }
+      ]
+    }
+  ]
+}
