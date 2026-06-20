@@ -9,20 +9,29 @@
 </head>
 <body>
   <div id="app">
-    <header class="hl-header">
-      <div class="hl-brand">🏛️ History&nbsp;Lab</div>
-      <div class="hl-hud" id="hud">Turn 1 · Accuracy 100%</div>
-      <label class="hl-mock" title="Run the full loop offline with scripted, grounded content (no Anna account / zero quota).">
-        <input type="checkbox" id="mockToggle" checked />
-        <span>Mock mode</span>
-      </label>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">🏛️</span>
+        <span class="brand-text">
+          <strong>History&nbsp;Lab</strong>
+          <em>fact-check the AI to win</em>
+        </span>
+      </div>
+      <div class="topbar-right">
+        <div class="hud" id="hud">Turn 1 · Accuracy 100%</div>
+        <label class="switch" title="Run the full loop offline with grounded scripted content — no account, zero quota.">
+          <input type="checkbox" id="mockToggle" checked />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span class="switch-label">Mock</span>
+        </label>
+      </div>
     </header>
 
-    <main id="view" class="hl-view" aria-live="polite"><!-- rendered by app.js --></main>
+    <main id="view" class="view" aria-live="polite"><!-- rendered by app.js --></main>
 
-    <footer class="hl-footer">
-      <span id="status" class="hl-status">loading…</span>
-      <span class="hl-tagline">AI generates · the human ratifies · Anna remembers</span>
+    <footer class="footer">
+      <span id="status" class="status">loading…</span>
+      <span class="tagline">AI generates · the human ratifies · Anna remembers</span>
     </footer>
   </div>
 

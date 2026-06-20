@@ -44,7 +44,7 @@ async function persist() {
 }
 
 function updateHud() {
-  ui.setHud(`Turn ${Math.min(run.turn + 1, scenario.turns.length)} · Accuracy ${run.accuracyScore}%`);
+  ui.setHud(`Turn ${Math.min(run.turn + 1, scenario.turns.length)} · Accuracy ${run.accuracyScore}%`, run.accuracyScore);
 }
 
 // ---- boot ----
