@@ -1,16 +1,34 @@
 import { hero } from "../data/content";
 import { Container, ArrowIcon } from "./ui";
 import HeroVisual from "./HeroVisual";
+import Particles from "./Particles";
 import Reveal from "./Reveal";
 
 export default function Hero({ onLaunch }: { onLaunch: () => void }) {
   return (
     <section id="top" className="relative overflow-hidden pt-10 sm:pt-16">
-      <Container>
+      {/* animated particle background (non-interactive, sits behind content) */}
+      <div className="pointer-events-none absolute inset-0 -z-0 opacity-[0.55]">
+        <Particles
+          particleColors={["#1b2540", "#7c8cff", "#b07bff", "#2b2222"]}
+          particleCount={150}
+          particleSpread={12}
+          speed={0.12}
+          particleBaseSize={90}
+          sizeRandomness={1}
+          alphaParticles={true}
+          moveParticlesOnHover={false}
+          disableRotation={false}
+        />
+      </div>
+      {/* fade the particles into the page edges */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-0 h-32 bg-gradient-to-t from-canvas to-transparent" />
+
+      <Container className="relative z-10">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-8">
           {/* left */}
           <Reveal>
-            <span className="inline-flex items-center gap-2 rounded-full border border-ink/15 bg-white px-3.5 py-1.5 text-xs font-semibold text-ink/70">
+            <span className="inline-flex items-center gap-2 rounded-full border border-ink/15 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-ink/70 backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-ink" />
               {hero.badge}
             </span>
@@ -35,7 +53,7 @@ export default function Hero({ onLaunch }: { onLaunch: () => void }) {
               </button>
               <a
                 href={hero.secondary.href}
-                className="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-white px-6 py-3.5 text-sm font-semibold text-ink transition hover:border-ink/50"
+                className="inline-flex items-center gap-2 rounded-full border border-ink/20 bg-white/80 px-6 py-3.5 text-sm font-semibold text-ink backdrop-blur transition hover:border-ink/50"
               >
                 {hero.secondary.label}
               </a>
