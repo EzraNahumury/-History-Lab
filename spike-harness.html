@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>History Lab — Spike Harness</title>
+  <!--
+    PURPOSE: Day-1 Go/No-Go. Prove the dangerous unknowns BEFORE writing features.
+    HOW TO USE:
+      1. Run `anna-app init history-lab --slug history-lab` then `anna-app dev`.
+      2. Open history-lab/bundle/index.html and copy the <script> + import line the
+         scaffold uses (the SDK import path below is the documented one — if the
+         scaffold imports differently, MATCH the scaffold).
+      3. Replace the body of history-lab/bundle/index.html with this file's content
+         (keep the scaffold's exact SDK import path).
+      4. `anna-app dev`, open the window, click each Spike button, read the log.
+    PASS/FAIL is in the log. See README "Day-1 Go / No-Go spikes".
+    NOTE: agent/llm calls bridge to a real Nexus + need auth. If you have no Anna
+    account, run `anna-app dev --mock-llm fixtures/x.jsonl` — a thrown auth error on
+    Spike A/B is itself a finding (means you must mock or get a PAT).
+  -->
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 16px; background:#0f1216; color:#e6e6e6; }
+    h1 { font-size: 18px; }
+    button { margin: 4px; padding: 8px 12px; cursor: pointer; border:1px solid #3a4250;
+             background:#1b2230; color:#e6e6e6; border-radius:6px; }
+    button:hover { background:#26303f; }
+    #status { padding:6px; margin:8px 0; border-radius:6px; background:#1b2230; }
+    #log { background:#070a0e; padding:12px; border-radius:6px; height:48vh; overflow:auto;
+           white-space:pre-wrap; font:12px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+    #art { max-width:320px; display:block; margin:8px 0; border:1px solid #3a4250; border-radius:6px; }
+    .ok { color:#6ee7a8; } .bad { color:#ff7b7b; } .dim { color:#8a95a5; }
+  </style>
+</head>
+<body>
+  <h1>🏛️ History Lab — Spike Harness</h1>
+  <div id="status" class="dim">connecting…</div>
+  <div>
+    <button id="a">Spike A · agent.session stream</button>
+    <button id="b">Spike B · llm.complete (fallback)</button>
+    <button id="c">Spike C · storage round-trip</button>
+    <button id="d">Spike D · image.generate + display</button>
+    <button id="clr">clear log</button>
+  </div>
+  <img id="art" alt="" />
+  <pre id="log"></pre>
+
+  <script type="module">
+    // ⬇️ MATCH THIS to whatever the scaffolded bundle/index.html imports.
+    import { AnnaAppRuntime } from "/static/anna-apps/_sdk/latest/index.js";
+
+    const logEl = document.getElementById("log");
+    const set = (id, txt, cls) => { const e = document.getElementById(id); e.textContent = txt; e.className = cls || ""; };
+    const log = (...a) => {
+      logEl.textContent += a.map(x => typeof x === "string" ? x : safe(x)).join(" ") + "\n";
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(...a);
+    };
+    const safe = (x) => { try { return JSON.stringify(x, null, 2); } catch { return String(x); } };
+    document.getElementById("clr").onclick = () => (logEl.textContent = "");
+
+    // --- connect ---
+    let anna;
+    try {
+      anna = await AnnaAppRuntime.connect();
+      window.__anna = anna;
+      log("connected ✓ — top-level keys:", Object.keys(anna || {}));
+      if (anna?.window?.hello) await anna.window.hello();
+      if (anna?.window?.ready) await anna.window.ready();
+      set("status", "connected ✓", "ok");
+    } catch (e) {
+      set("status", "connect FAILED — fix the SDK import path first", "bad");
+      log("connect FAILED:", String(e));
+    }
+    // Some builds expose the API on window.anna instead of the connect() return value.
+    const A = (typeof window !== "undefined" && window.anna) ? window.anna : anna;
+
+    // --- SPIKE A: the make-or-break agent streaming path ---
+    document.getElementById("a").onclick = async () => {
+      log("\n=== SPIKE A: agent.session stream ===");
+      try {
+        const systemPrompt =
+          "You are a grounded historian. Reply ONLY with a JSON object between the markers <<<BEGIN>>> and <<<END>>>.";
+        const userPrompt =
+          'Cuban Missile Crisis, turn 1. Between <<<BEGIN>>> and <<<END>>> return JSON: ' +
+          '{"scene":"2 sentences","options":["opt1","opt2","opt3"]}';
+
+        // Two possible surfaces — detect which one this build exposes.
+        let sess;
+        if (typeof A?.agent?.session === "function") {
+          log(".agent.session is a FUNCTION (iframe wrapper)");
+          sess = await A.agent.session({ submode: "auto", systemPrompt });
+        } else if (A?.agent?.session?.create) {
+          log(".agent.session.create exists (host-API surface)");
+          sess = await A.agent.session.create({ submode: "auto", systemPrompt });
+        } else {
+          throw new Error("No agent.session() or agent.session.create() found — inspect window.__anna.agent");
+        }
+        log("session created:", sess);
+
+        // run() may return a bare async-iterable OR a Promise<{stream_id,...}>.
+        let ret = sess?.run
+          ? sess.run({ content: userPrompt })
+          : await A.agent.session.run({ app_session_uuid: sess?.app_session_uuid, content: userPrompt });
+
+        const isIter = !!(ret && ret[Symbol.asyncIterator]);
+        log("run() typeof:", typeof ret, "| async-iterable:", isIter);
+        const iterable = isIter ? ret : await ret;
+
+        let buf = "";
+        let frames = 0;
+        for await (const frame of iterable) {
+          frames++;
+          if (frames <= 6) log("frame:", String(frame?.event), safe(frame).slice(0, 160));
+          if (frame?.event === "error") { log("⚠️ ERROR frame:", frame); break; }
+          if (frame?.event === "sse") buf += frame?.choices?.[0]?.delta?.content ?? "";
+          if (frame?.event === "end") { log("END frame after", frames, "frames"); break; }
+        }
+        log("FULL BUFFER:\n" + buf);
+        const m = buf.match(/<<<BEGIN>>>([\s\S]*?)<<<END>>>/);
+        if (m) { log("✅ parsed envelope:", JSON.parse(m[1])); log("SPIKE A: PASS ✓"); }
+        else { log("⚠️ model did not emit the envelope — tighten the prompt / parse defensively"); }
+      } catch (e) { log("SPIKE A threw:", String(e), "\n→ inspect window.__anna.agent in console"); }
+    };
+
+    // --- SPIKE B: non-streaming fallback ---
+    document.getElementById("b").onclick = async () => {
+      log("\n=== SPIKE B: llm.complete ===");
+      try {
+        const r = await A.llm.complete({ messages: [{ role: "user", content: "Reply with one word: OK" }], maxTokens: 20 });
+        log("result:", r);
+        log("content.text =", r?.content?.text ?? r?.content ?? "(unknown shape — inspect result)");
+        log("SPIKE B: works → you have a guaranteed non-streaming fallback ✓");
+      } catch (e) { log("SPIKE B threw:", String(e)); }
+    };
+
+    // --- SPIKE C: durable state ---
+    document.getElementById("c").onclick = async () => {
+      log("\n=== SPIKE C: storage round-trip ===");
+      try {
+        const w = await A.storage.set({ key: "spike:test", value: { n: 1, t: "hello" } });
+        log("set ->", w);
+        const g = await A.storage.get({ key: "spike:test" });
+        log("get ->", g);
+        log("SPIKE C: PASS ✓  (etag =", w?.etag ?? "?", ")");
+      } catch (e) { log("SPIKE C threw:", String(e), "\n→ try positional storage.set('k', v) if object form fails"); }
+    };
+
+    // --- SPIKE D: image generate + DISPLAY only (no fetch -> no CORS trap) ---
+    document.getElementById("d").onclick = async () => {
+      log("\n=== SPIKE D: image.generate + <img> display ===");
+      try {
+        const im = await A.image.generate({ prompt: "1962 White House war room, dramatic period illustration", n: 1, size: "1024x1024" });
+        log("result:", im);
+        const url = im?.images?.[0]?.url;
+        log("url =", url);
+        if (url) { document.getElementById("art").src = url; log("If the image renders above → DISPLAY path works ✓ (img-src must allow it)"); }
+        else log("no url in result — inspect shape");
+      } catch (e) { log("SPIKE D threw:", String(e)); }
+    };
+  </script>
+</body>
+</html>
