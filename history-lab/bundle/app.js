@@ -13,6 +13,7 @@ import { loadRun, saveRun } from "./store.js";
 import { generateScene, generateRuling } from "./agent.js";
 import { generateArt } from "./image.js";
 import { getScenario, listScenarios } from "./scenarios.js";
+import { tallyVerdict, buildStorybookPayload } from "./logic.js";
 import * as ui from "./ui.js";
 
 const view = document.getElementById("view");
@@ -126,10 +127,7 @@ async function onChoose(turnIndex, optIndex, sceneData, imageUrl) {
 }
 
 async function onVerdict(turnIndex, choiceLabel, ruling, imageUrl, verdict) {
-  const correct = (verdict === "approve" && ruling.accurate) || (verdict === "flag" && !ruling.accurate);
-  run.totalVerdicts += 1;
-  if (correct) run.correctVerdicts += 1;
-  run.accuracyScore = Math.round((run.correctVerdicts / run.totalVerdicts) * 100);
+  const correct = tallyVerdict(run, verdict, ruling);
 
   if (verdict === "flag") {
     run.flaggedRulings.push({ turn: turnIndex + 1, choice: choiceLabel, ruling: ruling.ruling, wasAccurate: ruling.accurate });
@@ -174,14 +172,7 @@ async function finish() {
   await appendArtifact({
     kind: "history-lab-storybook",
     summary,
-    data: {
-      scenario: scenario.name,
-      accuracy: run.accuracyScore,
-      correctVerdicts: run.correctVerdicts,
-      totalVerdicts: run.totalVerdicts,
-      path: run.branchPath.map((s) => ({ turn: s.turn, choice: s.choice, verdict: s.verdict, correct: s.correct })),
-      flagged: run.flaggedRulings,
-    },
+    data: buildStorybookPayload(scenario, run),
   });
 }
 

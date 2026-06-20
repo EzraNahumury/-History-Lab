@@ -1,45 +1,40 @@
 {
   "schema": 2,
-  "name": "History Lab",
-  "slug": "history-lab",
   "system_prompt_addendum": "History Lab is an interactive, illustrated historical decision game. When the user mentions it, help them pick a scenario and play turn by turn. The app's own UI runs the loop: it streams a grounded scene and three plausible options, then proposes a 'Historian's Ruling' that the user must Approve or Flag as a hallucination before the timeline advances. Stay strictly within documented history; never advance the timeline yourself.",
-  "tags": ["education", "game", "history", "ai-literacy"],
+  "permissions": ["storage.read", "storage.write"],
   "required_executas": [],
-  "optional_executas": [],
-  "permissions": [
-    "agent.session.create",
-    "agent.session.run",
-    "image.generate",
-    "storage.get",
-    "storage.set",
-    "chat.append_artifact"
-  ],
+  "tags": ["education", "game", "history", "ai-literacy"],
   "ui": {
-    "bundle": { "format": "static-spa", "entry": "bundle/index.html" },
+    "bundle": {
+      "format": "static-spa",
+      "entry": "index.html",
+      "external_origins": []
+    },
     "views": [
       {
         "name": "main",
         "title": "History Lab",
-        "default_size": { "width": 980, "height": 760 },
-        "min_size": { "width": 560, "height": 520 },
-        "single_instance": true
+        "default": true,
+        "default_size": { "w": 900, "h": 720 },
+        "min_size": { "w": 520, "h": 480 }
       }
     ],
     "host_api": {
-      "agent": ["*"],
-      "llm": ["*"],
+      "agent": { "session": { "auto": true } },
+      "llm": ["complete"],
       "image": ["generate"],
-      "storage": ["get", "set", "list"],
+      "storage": ["get", "set"],
       "chat": ["append_artifact"],
-      "window": ["*"]
+      "window": ["set_title"]
     },
     "csp_overrides": {
       "img-src": ["https:"],
       "style-src": ["'self'"]
-    }
+    },
+    "state_merge": "last_writer_wins"
   },
   "dev": {
-    "user_id": 1,
+    "fixtures": ["fixtures/*.jsonl"],
     "seed_storage": {
       "scenarios:index": {
         "scenarios": [
@@ -47,6 +42,6 @@
         ]
       }
     },
-    "mocks": {}
+    "user_id": 1
   }
 }

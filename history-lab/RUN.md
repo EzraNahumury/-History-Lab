@@ -11,12 +11,18 @@ is deterministic and playable with zero quota and no login.
 
 ```bash
 npm i -g @anna-ai/cli          # once (needs Node 22+)
+pip install uv                 # the dev harness spawns a `uvx` python bridge (required)
 cd history-lab
-anna-app validate --strict     # confirm ui.host_api covers every anna.<ns>.<method>
-anna-app dev                   # dashboard at http://127.0.0.1:5180/
+anna-app validate --strict     # ✓ schema + ACL  (verified passing)
+anna-app dev --no-llm          # ✓ boots; dashboard at http://127.0.0.1:5180/
 ```
 
-Then `#`-mention the app (or open its window from the dev dashboard) and play.
+Then open the app window from the dev dashboard and play. Mock mode needs no LLM, so
+`--no-llm` is fine; drop it (and add `--mock-llm <fixture>` or log in) to test Live mode.
+
+> **Verified on this machine:** `anna-app validate --strict` passes, and `anna-app dev`
+> boots the bundle (HTTP 200, `bridge ready`). The pure game logic is covered by
+> `tests/logic.test.mjs` — run it with `node tests/logic.test.mjs`.
 
 ## Two modes
 

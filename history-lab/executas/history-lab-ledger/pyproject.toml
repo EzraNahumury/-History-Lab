@@ -1,10 +1,15 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "history-lab-ledger"
 version = "0.1.0"
 description = "Optional deterministic ledger Executa for History Lab — commits approved rulings and recomputes the fact-check accuracy score outside the LLM."
 requires-python = ">=3.10"
-dependencies = []
 
-# Run locally (uv): `uv run ledger.py`  (or via `anna-app executa dev`)
-# JSON-RPC 2.0 over stdio. Adapt method/manifest shapes to the canonical
-# scaffold from `anna-app executa init` before publishing.
+[project.scripts]
+"history-lab-ledger" = "ledger:main"
+
+[tool.setuptools]
+py-modules = ["ledger"]

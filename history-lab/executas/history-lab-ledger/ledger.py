@@ -2,95 +2,79 @@
 """History Lab — deterministic ledger Executa (OPTIONAL, should-have).
 
 Keeps the fact-check accuracy score OUT of the LLM so it can never be hallucinated.
-Speaks JSON-RPC 2.0 over stdin/stdout. The process loops on stdin until EOF (the #1
-Executa bug is exiting after one call), stdout carries ONLY JSON-RPC frames, and ALL
-logging goes to stderr.
+stdio JSON-RPC plugin matching the Anna dev dispatcher contract (see the `anna-app
+executa init` scaffold):
 
-This is a minimal reference. Before publishing, align the `describe` manifest shape and
-the `invoke` dispatch with the canonical scaffold produced by `anna-app executa init`.
+  describe -> manifest
+  health   -> {"status": "ok"}
+  invoke   -> tool methods return the envelope {"success": True, "data": {...}}
+              or {"success": False, "error": "<reason>"}
 
-Methods
-  describe       -> tool manifest
-  invoke         -> { name|method: "commit_ruling", arguments|args: {...} }
-  health         -> { ok: true }
+The process loops on stdin until EOF (the #1 Executa bug is exiting after one call),
+stdout carries ONLY JSON-RPC frames, and all logging goes to stderr.
 
-commit_ruling(arguments)
-  in : { correctVerdicts: int, totalVerdicts: int }  # totals AFTER this verdict
-  out: { accuracyScore: int }                        # 0..100, deterministic
+To wire it into the app: add it to manifest.required_executas + ui.host_api.tools and
+call it from the UI via anna.tools.invoke({tool_id, method:"commit_ruling", args}).
 """
-import sys
 import json
+import sys
+
+MANIFEST = {
+    "name": "history-lab-ledger",
+    "version": "0.1.0",
+    "tools": [
+        {
+            "name": "commit_ruling",
+            "description": "Append an approved ruling and recompute fact-check accuracy (deterministic, no LLM).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "correctVerdicts": {"type": "integer"},
+                    "totalVerdicts": {"type": "integer"},
+                },
+                "required": ["correctVerdicts", "totalVerdicts"],
+                "additionalProperties": False,
+            },
+        }
+    ],
+}
 
 
 def log(*a):
     print(*a, file=sys.stderr, flush=True)
 
 
-def manifest():
-    return {
-        "name": "history-lab-ledger",
-        "version": "0.1.0",
-        "description": "Deterministic commit + accuracy scoring for History Lab.",
-        "methods": [
-            {
-                "name": "commit_ruling",
-                "description": "Append an approved ruling and recompute fact-check accuracy.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "correctVerdicts": {"type": "integer"},
-                        "totalVerdicts": {"type": "integer"},
-                    },
-                    "required": ["correctVerdicts", "totalVerdicts"],
-                },
-            }
-        ],
-    }
-
-
-def commit_ruling(args):
-    total = int(args.get("totalVerdicts", 0))
-    correct = int(args.get("correctVerdicts", 0))
-    score = round(100 * correct / total) if total > 0 else 100
-    return {"accuracyScore": score}
-
-
-def handle(req):
-    method = req.get("method")
-    params = req.get("params") or {}
-    if method == "describe":
-        return manifest()
-    if method == "health":
-        return {"ok": True}
-    if method == "invoke":
-        name = params.get("name") or params.get("method")
-        args = params.get("arguments") or params.get("args") or {}
-        if name == "commit_ruling":
-            return commit_ruling(args)
-        raise ValueError(f"unknown tool method: {name}")
-    raise ValueError(f"unknown rpc method: {method}")
+def invoke(method, args):
+    if method == "commit_ruling":
+        total = int(args.get("totalVerdicts", 0))
+        correct = int(args.get("correctVerdicts", 0))
+        score = round(100 * correct / total) if total > 0 else 100
+        return {"success": True, "data": {"accuracyScore": score}}
+    return {"success": False, "error": f"unknown method: {method}"}
 
 
 def main():
     log("[ledger] started; waiting on stdin until EOF")
-    for line in sys.stdin:                      # loop until EOF — do NOT exit after one call
+    for line in sys.stdin:                       # loop until EOF — never exit after one call
         line = line.strip()
         if not line:
             continue
+        req = json.loads(line)
         try:
-            req = json.loads(line)
-        except json.JSONDecodeError as e:
-            log("[ledger] bad json:", e)
-            continue
-        resp = {"jsonrpc": "2.0", "id": req.get("id")}
-        try:
-            resp["result"] = handle(req)
-        except Exception as e:                   # noqa: BLE001 - report as JSON-RPC error
-            resp["error"] = {"code": -32000, "message": str(e)}
+            m = req.get("method")
+            if m == "describe":
+                result = MANIFEST
+            elif m == "health":
+                result = {"status": "ok"}
+            elif m == "invoke":
+                result = invoke(req["params"]["tool"], req["params"].get("arguments", {}))
+            else:
+                raise ValueError(f"unknown rpc: {m}")
+            sys.stdout.write(json.dumps({"jsonrpc": "2.0", "id": req.get("id"), "result": result}) + "\n")
+        except Exception as e:                    # noqa: BLE001 - surface as JSON-RPC error
             log("[ledger] error:", e)
-        sys.stdout.write(json.dumps(resp) + "\n")
-        sys.stdout.flush()                       # flush after every frame
-    log("[ledger] stdin closed; exiting")
+            sys.stdout.write(json.dumps({"jsonrpc": "2.0", "id": req.get("id"), "error": {"code": -32601, "message": str(e)}}) + "\n")
+        sys.stdout.flush()                        # flush after every frame
 
 
 if __name__ == "__main__":
