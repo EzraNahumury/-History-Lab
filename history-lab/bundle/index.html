@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>History Lab</title>
+  <!-- External stylesheet only (CSP: no inline styles). -->
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="hl-header">
+      <div class="hl-brand">🏛️ History&nbsp;Lab</div>
+      <div class="hl-hud" id="hud">Turn 1 · Accuracy 100%</div>
+      <label class="hl-mock" title="Run the full loop offline with scripted, grounded content (no Anna account / zero quota).">
+        <input type="checkbox" id="mockToggle" checked />
+        <span>Mock mode</span>
+      </label>
+    </header>
+
+    <main id="view" class="hl-view" aria-live="polite"><!-- rendered by app.js --></main>
+
+    <footer class="hl-footer">
+      <span id="status" class="hl-status">loading…</span>
+      <span class="hl-tagline">AI generates · the human ratifies · Anna remembers</span>
+    </footer>
+  </div>
+
+  <!-- Module entry only (CSP: script-src 'self', no inline scripts). -->
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

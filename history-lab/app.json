@@ -1,0 +1,9 @@
+{
+  "name": "History Lab",
+  "slug": "history-lab",
+  "tagline": "Replay history — and fact-check the AI to win.",
+  "category": "Education",
+  "short_description": "A branching, illustrated historical decision game where catching the AI's hallucinations is the core mechanic.",
+  "description": "Step into a pivotal historical moment (the Cuban Missile Crisis, and more). Anna's host agent streams a grounded scene and three plausible choices, and generates period art. Before the timeline can advance, it proposes a 'Historian's Ruling' — and you, the reviewing historian, must Approve it or Flag it as a hallucination. Only approved rulings commit to durable state and advance the canonical timeline, while your fact-checking accuracy updates live. At the end, your illustrated decision-storybook is posted back into the chat. AI generates, the human ratifies, Anna remembers.",
+  "tags": ["education", "game", "history", "ai-literacy", "human-in-the-loop"]
+}
