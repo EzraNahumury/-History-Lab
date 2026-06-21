@@ -1,7 +1,7 @@
 {
   "slug": "history-lab",
   "name": "History Lab",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "tagline": "Replay history — and fact-check the AI to win.",
   "description": "A branching, illustrated historical decision game where catching the AI's hallucinations is the core mechanic. Anna's host agent streams a grounded scene and three plausible choices and generates period art; before the timeline advances, you must Approve its 'Historian's Ruling' or Flag it as a hallucination. Only approved rulings commit to durable state, while your fact-checking accuracy updates live. AI generates, the human ratifies, Anna remembers.",
   "category": "education",
