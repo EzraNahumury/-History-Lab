@@ -39,15 +39,24 @@ MANIFEST = {
         {
             "name": "commit_ruling",
             "description": "Append an approved ruling and recompute fact-check accuracy (deterministic, no LLM).",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "correctVerdicts": {"type": "integer"},
-                    "totalVerdicts": {"type": "integer"},
+            # Anna describe contract: parameters is a LIST of {name,type,description,required}
+            # descriptors (NOT a JSON-Schema object) — matches the official anna-executa
+            # plugins. A JSON-Schema object here makes the Agent reject the manifest
+            # ("describe returned no manifest").
+            "parameters": [
+                {
+                    "name": "correctVerdicts",
+                    "type": "integer",
+                    "description": "Number of fact-checks the player has gotten correct so far.",
+                    "required": True,
                 },
-                "required": ["correctVerdicts", "totalVerdicts"],
-                "additionalProperties": False,
-            },
+                {
+                    "name": "totalVerdicts",
+                    "type": "integer",
+                    "description": "Total number of verdicts the player has cast so far.",
+                    "required": True,
+                },
+            ],
         }
     ],
     "runtime": {"type": "uv", "min_version": "0.1.0"},
