@@ -1,0 +1,9 @@
+{
+  "slug": "historian-gm",
+  "name": "Historian Game-Master",
+  "version": "0.1.0",
+  "executa_type": "skill",
+  "description": "Grounding + ruling-format protocol for History Lab: keeps the agent strictly within documented history, emits exactly three plausible options and a structured Historian's Ruling, and never advances the timeline itself. Declarative skill defined in SKILL.md.",
+
+  "_comment": "Declarative Skill Executa (no runtime process). The recipe body lives in SKILL.md. NOT app-bundled in bundled_executas, because the `anna-app dev` local harness only resolves RUNTIME executas (python/node/go/binary) and hard-fails on a bundled skill (\"unknown type 'skill'\"). Publish it on its own with `anna-app executa publish ./executas/historian-gm` (or via the Developer Console). The same grounding rules are ALSO encoded in manifest.system_prompt_addendum + each scenario's systemPrompt, so the running app already enforces them."
+}

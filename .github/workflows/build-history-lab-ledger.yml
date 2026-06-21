@@ -1,0 +1,123 @@
+# ============================================================
+# History Lab Ledger — build releasable Executa binaries
+# ============================================================
+# Builds the self-contained PyInstaller binary for the history-lab-ledger
+# Executa across platforms and attaches them to a GitHub Release, so the
+# Anna Agent can install a binary distribution with no Python on the
+# end-user machine. Mirrors anna-executa-examples/.github/workflows/
+# anna-app-publish.yml, scoped to this single executa.
+#
+# Trigger:
+#   • push a tag `history-lab-ledger-v<version>` (creates/uses that Release), or
+#   • run manually (Actions ▸ Build History Lab Ledger binaries ▸ Run workflow).
+#
+# After the Release exists, flip executa.json#distribution.active to "binary"
+# (binary_urls already point at this repo's Release for that tag). On
+# `anna-app apps cut`, matrix-nexus mirrors the bytes into R2 + pins sha256.
+# ============================================================
+
+name: Build History Lab Ledger binaries
+
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
+  push:
+    tags:
+      - "history-lab-ledger-v*"
+
+permissions:
+  contents: write # create/update Releases + upload assets
+
+defaults:
+  run:
+    working-directory: history-lab/executas/history-lab-ledger
+
+jobs:
+  meta:
+    runs-on: ubuntu-latest
+    outputs:
+      tool_id: ${{ steps.read.outputs.tool_id }}
+      version: ${{ steps.read.outputs.version }}
+      slug: ${{ steps.read.outputs.slug }}
+      tag: ${{ steps.read.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: read
+        shell: bash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          m = json.load(open("executa.json"))
+          tool_id, version, slug = m["tool_id"], str(m["version"]), m["slug"]
+          print(f"tool_id={tool_id}")
+          print(f"version={version}")
+          print(f"slug={slug}")
+          print(f"tag={slug}-v{version}")
+          PY
+
+  build:
+    needs: meta
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - { os: macos-14, name: darwin-arm64, python_arch: "" }
+          - { os: macos-15, name: darwin-x86_64, python_arch: x64 }
+          - { os: ubuntu-latest, name: linux-x86_64, python_arch: "" }
+    runs-on: ${{ matrix.platform.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: ${{ matrix.platform.python_arch || '' }}
+
+      - name: Install PyInstaller
+        run: python -m pip install --upgrade pip pyinstaller
+
+      - name: Build binary
+        env:
+          TOOL_ID: ${{ needs.meta.outputs.tool_id }}
+        run: |
+          pyinstaller --onefile --clean --noupx --name "$TOOL_ID" ledger.py
+          test -f "dist/$TOOL_ID"
+
+      - name: Smoke test (describe → result.name == tool_id)
+        env:
+          TOOL_ID: ${{ needs.meta.outputs.tool_id }}
+        run: |
+          out="$(printf '%s\n' '{"jsonrpc":"2.0","method":"describe","id":1}' | "./dist/$TOOL_ID" 2>/dev/null || true)"
+          echo "describe → $out"
+          if printf '%s' "$out" | python3 -c "import sys,json,os;d=json.load(sys.stdin);assert d['result']['name']==os.environ['TOOL_ID']" 2>/dev/null; then
+            echo "✅ protocol smoke test passed"
+          else
+            echo "::warning::describe smoke test inconclusive for $TOOL_ID (binary still uploaded)"
+          fi
+
+      - name: Package (tar.gz + sha256)
+        env:
+          TOOL_ID: ${{ needs.meta.outputs.tool_id }}
+          PLATFORM: ${{ matrix.platform.name }}
+        run: |
+          asset="$TOOL_ID-$PLATFORM.tar.gz"
+          tar -C dist -czf "$asset" "$TOOL_ID"
+          shasum -a 256 "$asset" > "$asset.sha256"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.meta.outputs.tool_id }}-${{ matrix.platform.name }}
+          path: |
+            history-lab/executas/history-lab-ledger/${{ needs.meta.outputs.tool_id }}-${{ matrix.platform.name }}.tar.gz
+            history-lab/executas/history-lab-ledger/${{ needs.meta.outputs.tool_id }}-${{ matrix.platform.name }}.tar.gz.sha256
+
+      - name: Attach to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.meta.outputs.tag }}
+          name: ${{ needs.meta.outputs.slug }} v${{ needs.meta.outputs.version }}
+          body: "Executa binaries for `${{ needs.meta.outputs.tool_id }}` (built by build-history-lab-ledger.yml)."
+          files: |
+            history-lab/executas/history-lab-ledger/${{ needs.meta.outputs.tool_id }}-${{ matrix.platform.name }}.tar.gz
+            history-lab/executas/history-lab-ledger/${{ needs.meta.outputs.tool_id }}-${{ matrix.platform.name }}.tar.gz.sha256

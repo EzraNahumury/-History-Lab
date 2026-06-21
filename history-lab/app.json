@@ -1,7 +1,16 @@
 {
+  "slug": "history-lab",
   "name": "History Lab",
+  "version": "0.1.0",
   "tagline": "Replay history — and fact-check the AI to win.",
   "description": "A branching, illustrated historical decision game where catching the AI's hallucinations is the core mechanic. Anna's host agent streams a grounded scene and three plausible choices and generates period art; before the timeline advances, you must Approve its 'Historian's Ruling' or Flag it as a hallucination. Only approved rulings commit to durable state, while your fact-checking accuracy updates live. AI generates, the human ratifies, Anna remembers.",
   "category": "education",
-  "pricing_model": "free"
+  "pricing_model": "free",
+  "homepage_url": "https://github.com/EzraNahumury/-History-Lab",
+  "support_url": "https://github.com/EzraNahumury/-History-Lab/issues",
+
+  "_comment_bundled_executas": "Tool Executas that ship inside this app. `anna-app apps publish` publishes each one, substitutes its server-minted tool_id into every `bundled:<handle>` reference in manifest.json (in memory) and writes bundle/anna-tool-ids.js. Only RUNTIME executas (python/node/go/binary) can be bundled here — the `anna-app dev` harness resolves bundled handles to a runnable process. The `historian-gm` Skill is a declarative Executa published separately (`anna-app executa publish ./executas/historian-gm`); its grounding is already active in-app via manifest.system_prompt_addendum + each scenario's systemPrompt.",
+  "bundled_executas": {
+    "history-lab-ledger": { "path": "./executas/history-lab-ledger" }
+  }
 }

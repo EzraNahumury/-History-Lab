@@ -1,27 +1,40 @@
 #!/usr/bin/env python3
-"""History Lab — deterministic ledger Executa (OPTIONAL, should-have).
+"""History Lab — deterministic ledger Executa.
 
-Keeps the fact-check accuracy score OUT of the LLM so it can never be hallucinated.
-stdio JSON-RPC plugin matching the Anna dev dispatcher contract (see the `anna-app
-executa init` scaffold):
+Keeps the fact-check accuracy score OUT of the LLM so it can never be
+hallucinated. The app's UI calls this tool via `anna.tools.invoke` on every
+committed verdict; the score it returns is the Anna-native source of truth.
 
-  describe -> manifest
-  health   -> {"status": "ok"}
-  invoke   -> tool methods return the envelope {"success": True, "data": {...}}
-              or {"success": False, "error": "<reason>"}
+stdio JSON-RPC plugin matching the Anna dev dispatcher contract (mirrors the
+`anna-app-focus-flow` / `anna-app-llm-demo` reference plugins):
 
-The process loops on stdin until EOF (the #1 Executa bug is exiting after one call),
-stdout carries ONLY JSON-RPC frames, and all logging goes to stderr.
+  initialize -> capability handshake (no reverse-RPC; sampling not negotiated)
+  describe   -> manifest (result.name == tool_id, used by the binary smoke test)
+  health     -> {"status": "healthy", ...}
+  invoke     -> {"success": True, "tool": <name>, "data": {...}}
+  shutdown   -> {"ok": True}
 
-To wire it into the app: add it to manifest.required_executas + ui.host_api.tools and
-call it from the UI via anna.tools.invoke({tool_id, method:"commit_ruling", args}).
+The process loops on stdin until EOF (the #1 Executa bug is exiting after one
+call), stdout carries ONLY JSON-RPC frames, and all logging goes to stderr.
+
+To package as a releasable binary see ./package_binary.sh and
+.github/workflows/build-history-lab-ledger.yml (forum guide /t/140).
 """
 import json
+import math
 import sys
+from datetime import datetime, timezone
+
+# MUST equal pyproject.toml [project].name and executa.json#tool_id.
+TOOL_ID = "tool-ezrakristanto-history-lab-ledger-d7etke5s"
 
 MANIFEST = {
-    "name": "history-lab-ledger",
+    # `name` is the binary identity checked by `describe` smoke tests; the host
+    # otherwise keys this plugin by the server-minted tool_id at registration.
+    "name": TOOL_ID,
+    "display_name": "History Lab Ledger",
     "version": "0.1.0",
+    "description": "Commit an approved ruling and recompute fact-check accuracy deterministically (no LLM).",
     "tools": [
         {
             "name": "commit_ruling",
@@ -37,6 +50,7 @@ MANIFEST = {
             },
         }
     ],
+    "runtime": {"type": "uv", "min_version": "0.1.0"},
 }
 
 
@@ -48,28 +62,54 @@ def invoke(method, args):
     if method == "commit_ruling":
         total = int(args.get("totalVerdicts", 0))
         correct = int(args.get("correctVerdicts", 0))
-        score = round(100 * correct / total) if total > 0 else 100
-        return {"success": True, "data": {"accuracyScore": score}}
-    return {"success": False, "error": f"unknown method: {method}"}
+        # Byte-for-byte the same formula the UI's logic.js uses (JS Math.round is
+        # floor(x+0.5) = round-half-UP; Python's round() is banker's rounding, which
+        # would diverge by 1pt at e.g. 5/8=62.5%). The point is it lives OUTSIDE the
+        # model, so the score is structurally un-hallucinable.
+        score = math.floor(100 * correct / total + 0.5) if total > 0 else 100
+        return {"accuracyScore": score, "correctVerdicts": correct, "totalVerdicts": total}
+    raise ValueError(f"unknown tool: {method}")
+
+
+def dispatch(req):
+    m = req.get("method")
+    params = req.get("params") or {}
+    if m == "initialize":
+        # No reverse-RPC / sampling — just echo a benign v1.1 handshake so the
+        # host never blocks on capability negotiation for this pure-compute tool.
+        proto = params.get("protocolVersion") or "1.1"
+        return {
+            "protocolVersion": proto,
+            "serverInfo": {"name": MANIFEST["name"], "version": MANIFEST["version"]},
+            "capabilities": {},
+        }
+    if m == "describe":
+        return MANIFEST
+    if m == "health":
+        return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat(), "version": MANIFEST["version"]}
+    if m == "invoke":
+        tool = params.get("tool")
+        data = invoke(tool, params.get("arguments", {}))
+        return {"success": True, "tool": tool, "data": data}
+    if m == "shutdown":
+        return {"ok": True}
+    raise ValueError(f"unknown rpc: {m}")
 
 
 def main():
-    log("[ledger] started; waiting on stdin until EOF")
+    log(f"[ledger] {MANIFEST['display_name']} v{MANIFEST['version']} started; waiting on stdin until EOF")
     for line in sys.stdin:                       # loop until EOF — never exit after one call
         line = line.strip()
         if not line:
             continue
-        req = json.loads(line)
         try:
-            m = req.get("method")
-            if m == "describe":
-                result = MANIFEST
-            elif m == "health":
-                result = {"status": "ok"}
-            elif m == "invoke":
-                result = invoke(req["params"]["tool"], req["params"].get("arguments", {}))
-            else:
-                raise ValueError(f"unknown rpc: {m}")
+            req = json.loads(line)
+        except json.JSONDecodeError:
+            sys.stdout.write(json.dumps({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error"}}) + "\n")
+            sys.stdout.flush()
+            continue
+        try:
+            result = dispatch(req)
             sys.stdout.write(json.dumps({"jsonrpc": "2.0", "id": req.get("id"), "result": result}) + "\n")
         except Exception as e:                    # noqa: BLE001 - surface as JSON-RPC error
             log("[ledger] error:", e)

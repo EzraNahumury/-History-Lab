@@ -1,15 +1,28 @@
+# NOTE: `name` and the `[project.scripts]` key MUST equal the minted tool_id
+# from https://anna.partners/executa (placeholder: tool-ezrakristanto-history-lab-ledger-d7etke5s).
+# `anna-app dev` spawns the executa with `uvx <project.name>`, so the three must
+# stay in lockstep: this file's name + script key, executa.json#tool_id, and
+# ledger.py MANIFEST["name"]. The plugin is stdlib-only — no dependencies.
+[project]
+name = "tool-ezrakristanto-history-lab-ledger-d7etke5s"
+version = "0.1.0"
+description = "History Lab Ledger — deterministic commit Executa: recomputes fact-check accuracy outside the LLM."
+requires-python = ">=3.10"
+authors = [{ name = "Ezra Kristanto Nahumury" }]
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "pyinstaller>=6",
+]
+
+[project.scripts]
+"tool-ezrakristanto-history-lab-ledger-d7etke5s" = "ledger:main"
+
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
-
-[project]
-name = "history-lab-ledger"
-version = "0.1.0"
-description = "Optional deterministic ledger Executa for History Lab — commits approved rulings and recomputes the fact-check accuracy score outside the LLM."
-requires-python = ">=3.10"
-
-[project.scripts]
-"history-lab-ledger" = "ledger:main"
 
 [tool.setuptools]
 py-modules = ["ledger"]

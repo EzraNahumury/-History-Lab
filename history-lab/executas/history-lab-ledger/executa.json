@@ -1,0 +1,45 @@
+{
+  "slug": "history-lab-ledger",
+  "name": "History Lab Ledger",
+  "version": "0.1.0",
+  "executa_type": "tool",
+  "description": "Deterministic ledger for History Lab: commits an approved Historian's Ruling and recomputes the fact-check accuracy score outside the LLM, so the score can never be hallucinated.",
+
+  "tool_id": "tool-ezrakristanto-history-lab-ledger-d7etke5s",
+  "type": "python",
+  "enabled": true,
+
+  "distribution": {
+    "active": "local",
+    "profiles": {
+      "local": {
+        "type": "local",
+        "supports_protocol": true
+      },
+      "binary": {
+        "type": "binary",
+        "executable_name": "tool-ezrakristanto-history-lab-ledger-d7etke5s",
+        "supports_protocol": true,
+        "binary_urls": {
+          "darwin-arm64": {
+            "url": "https://github.com/EzraNahumury/-History-Lab/releases/download/history-lab-ledger-v0.1.0/tool-ezrakristanto-history-lab-ledger-d7etke5s-darwin-arm64.tar.gz",
+            "entrypoint": "tool-ezrakristanto-history-lab-ledger-d7etke5s",
+            "format": "tar.gz"
+          },
+          "darwin-x86_64": {
+            "url": "https://github.com/EzraNahumury/-History-Lab/releases/download/history-lab-ledger-v0.1.0/tool-ezrakristanto-history-lab-ledger-d7etke5s-darwin-x86_64.tar.gz",
+            "entrypoint": "tool-ezrakristanto-history-lab-ledger-d7etke5s",
+            "format": "tar.gz"
+          },
+          "linux-x86_64": {
+            "url": "https://github.com/EzraNahumury/-History-Lab/releases/download/history-lab-ledger-v0.1.0/tool-ezrakristanto-history-lab-ledger-d7etke5s-linux-x86_64.tar.gz",
+            "entrypoint": "tool-ezrakristanto-history-lab-ledger-d7etke5s",
+            "format": "tar.gz"
+          }
+        }
+      }
+    }
+  },
+
+  "_comment": "Publish metadata (slug/name/version/executa_type) is read by `anna-app apps publish` / `anna-app executa publish`; the dev fields (tool_id/type/enabled) are read by `anna-app dev`, which spawns this stdlib-only plugin via `uvx <tool_id>` (project.name in pyproject.toml MUST equal this tool_id). `distribution.active` selects which profile publish forwards: `local` ships the dev-path locator (default, zero release needed); flip to `binary` to ship the self-contained PyInstaller binary per platform from this repo's GitHub Release (tag `history-lab-ledger-v<version>`, built by .github/workflows/build-history-lab-ledger.yml). On `anna-app apps cut`, matrix-nexus mirrors the Release bytes into apps.anna.partners R2 and pins sha256. Replace the `tool-test-...` placeholder with the server-minted tool_id (and rerun for pyproject.toml + ledger.py MANIFEST.name) once you have pushed the app once. This dir is the `history-lab-ledger` handle referenced by app.json#bundled_executas."
+}

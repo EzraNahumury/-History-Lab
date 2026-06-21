@@ -1,8 +1,15 @@
 {
   "schema": 2,
   "system_prompt_addendum": "History Lab is an interactive, illustrated historical decision game. When the user mentions it, help them pick a scenario and play turn by turn. The app's own UI runs the loop: it streams a grounded scene and three plausible options, then proposes a 'Historian's Ruling' that the user must Approve or Flag as a hallucination before the timeline advances. You may open the app directly on a chosen scenario by calling open_app_view with payload { scenarioId } where scenarioId is one of: cuban-missile-1962, roman-senate-63bc, apollo11-go-nogo. Stay strictly within documented history; never advance the timeline yourself.",
-  "permissions": ["storage.read", "storage.write"],
-  "required_executas": [],
+  "permissions": ["storage.read", "storage.write", "tools.invoke", "llm.complete", "chat.append_artifact"],
+  "required_executas": [
+    {
+      "tool_id": "bundled:history-lab-ledger",
+      "min_version": "0.1.0",
+      "version": "latest"
+    }
+  ],
+  "optional_executas": [],
   "tags": ["education", "game", "history", "ai-literacy"],
   "ui": {
     "bundle": {
@@ -20,12 +27,13 @@
       }
     ],
     "host_api": {
-      "agent": { "session": { "auto": true } },
+      "agent": { "session": { "auto": true }, "tools": [] },
       "llm": ["complete"],
       "image": ["generate"],
       "storage": ["get", "set"],
       "chat": ["append_artifact"],
-      "window": ["set_title"]
+      "window": ["set_title"],
+      "tools": ["required:bundled:history-lab-ledger"]
     },
     "csp_overrides": {
       "img-src": ["https:"],

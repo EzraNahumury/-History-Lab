@@ -24,6 +24,11 @@ __pycache__/
 .venv/
 .uv/
 
+# PyInstaller binary packaging (package_binary.sh / CI)
+*.spec
+*.manifest
+dist-anna/
+
 # Editor / OS
 .vscode/
 .idea/

@@ -16,6 +16,7 @@ import { generateScene, generateRuling } from "./agent.js";
 import { generateArt } from "./image.js";
 import { getScenario, listScenarios } from "./scenarios.js";
 import { tallyVerdict, buildStorybookPayload } from "./logic.js";
+import { commitRuling } from "./ledger.js";
 import * as ui from "./ui.js";
 
 const view = document.getElementById("view");
@@ -147,6 +148,16 @@ async function onChoose(turnIndex, optIndex, sceneData, imageUrl) {
 
 async function onVerdict(turnIndex, choiceLabel, ruling, imageUrl, verdict) {
   const correct = tallyVerdict(run, verdict, ruling);
+
+  // Deterministic commit via the history-lab-ledger Executa
+  // (anna.tools.invoke -> reverse-RPC). Same number as the local formula, but
+  // recomputed OUTSIDE the LLM so the score is structurally un-hallucinable.
+  // Best-effort: Mock mode / missing tool / failure -> identical local score.
+  try {
+    const led = await commitRuling(run.correctVerdicts, run.totalVerdicts, { mock: MOCK });
+    run.accuracyScore = led.accuracyScore;
+    if (led.source === "ledger") ui.setStatus("score committed via ledger Executa");
+  } catch (e) { console.warn("[app] ledger commit failed; keeping local score", e); }
 
   if (verdict === "flag") {
     run.flaggedRulings.push({ turn: turnIndex + 1, choice: choiceLabel, ruling: ruling.ruling, wasAccurate: ruling.accurate });

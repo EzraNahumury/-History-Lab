@@ -271,7 +271,7 @@ Each row is a verified signature plus the exact ACL entry it requires in `manife
 | Result into chat | `anna.chat.append_artifact({artifact:{kind?, summary?, payload_ref?, data?}})` → `{artifact_id}` | `chat` | Renders an artifact **card** (summary + ref). Inline image rendering is **not** guaranteed — plan a text-card fallback. |
 | Live title | `anna.window.set_title("Turn N - Accuracy X%")` | `window` (always granted) | The "app responds to you" beat. |
 | Assistant opens window | `open_app_view(app_id, view?, payload)` | n/a (LLM tool) | Param is named `payload`; surfaces as `entry_payload`. |
-| Deterministic commit *(optional)* | `anna.tools.invoke({tool_id, method:'commit_ruling', args})` | `tools` | Keeps the accuracy score un-hallucinable. Fallback: plain `storage.set`. |
+| Deterministic commit *(integrated)* | `anna.tools.invoke({tool_id, method:'commit_ruling', args})` | `tools` | Wired as a `required_executas` (`history-lab-ledger`); recomputes accuracy outside the LLM. Degrades to the identical `logic.js` formula. |
 
 > ⚠️ **ACL is unforgiving:** every method you call must be allow-listed in `ui.host_api.<namespace>`, or the call returns `permission_denied` at runtime even though the SDK exposes it. Run `anna-app validate --strict` to confirm coverage. `manifest.permissions[]` is **audit/display only** — it is *not* the enforced gate.
 
@@ -342,8 +342,8 @@ if (isFinal(run)) {
 | Host bridge | `AnnaAppRuntime.connect()` from `/static/anna-apps/_sdk/latest/index.js`; `AnnaAppWM` for windowing |
 | AI | `agent.session.*` (primary) + `image.generate`; `llm.complete` (fallback) |
 | State | `anna.storage` (+ `anna.files` only if persisting art durably — *optional*) |
-| Optional Executa | `history-lab-ledger` — Python (uv), JSON-RPC 2.0 over stdio, loops on stdin until EOF, logs to stderr |
-| Optional Skill | `historian-gm/SKILL.md` — steers the agent to stay grounded + emit a structured ruling |
+| Executa (wired) | `history-lab-ledger` — Python (uv), JSON-RPC 2.0 over stdio, loops on stdin until EOF, logs to stderr; `required_executas` + `ui.host_api.tools`, called via `anna.tools.invoke` |
+| Skill | `historian-gm/SKILL.md` — steers the agent to stay grounded + emit a structured ruling |
 | Tooling | `@anna-ai/cli` (`anna-app init/dev/validate/doctor`), Node 22+, `uv` (Astral) |
 
 ---
@@ -374,12 +374,16 @@ history-lab/
 │   ├── cuban-missile-1962.json   # the MVP scenario
 │   ├── roman-senate.json
 │   └── apollo11-go-nogo.json
-├── executas/                     # OPTIONAL deterministic commit tool
-│   └── history-lab-ledger/
-│       ├── pyproject.toml
-│       └── ledger.py             # describe / invoke(commit_ruling) / health
-├── skills/
-│   └── historian-gm/SKILL.md     # steers grounding + ruling format
+├── executas/                     # bundled Tool Executa (required_executas)
+│   └── history-lab-ledger/       # deterministic commit Tool (Python stdio)
+│       ├── executa.json          # publish + dev metadata + binary distribution profiles
+│       ├── pyproject.toml        # [project].name == [scripts] key == minted tool_id
+│       ├── package_binary.sh     # build a releasable PyInstaller binary (forum /t/140)
+│       └── ledger.py             # initialize / describe / health / invoke / shutdown
+├── skills/                       # declarative grounding Skill (standalone, publishable)
+│   └── historian-gm/
+│       ├── executa.json          # skill publish metadata (anna-app executa publish)
+│       └── SKILL.md              # steers grounding + ruling format
 ├── fixtures/                     # JSONL recordings for --mock-llm + replay
 │   └── cuban-missile.jsonl
 ├── tests/
@@ -404,9 +408,9 @@ history-lab/
 - `dev` block: `seed_storage` + `--mock-llm <fixture>` so the demo runs **offline and deterministically**.
 
 ### 🟡 Should Have
-- `open_app_view` so the assistant opens the window from a chat request (the marquee opening beat).
-- A 2nd & 3rd scenario via a dropdown.
-- Deterministic commit via the `history-lab-ledger` Executa (`tools.invoke`).
+- `open_app_view` so the assistant opens the window from a chat request (the marquee opening beat). ✅
+- A 2nd & 3rd scenario via a dropdown. ✅ (Cuban Missile Crisis, Catiline 63 BC, Apollo 11)
+- Deterministic commit via the `history-lab-ledger` Executa (`tools.invoke`). ✅ (wired as `required_executas`; binary-distributable via `package_binary.sh` + CI)
 - Optional one-line reason on Flag; `agent.session.cancel` Stop button; graceful UI for `permission_denied` / `quota_exceeded` / `state_too_large`.
 
 ### 🟢 Nice to Have

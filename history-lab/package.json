@@ -1,0 +1,17 @@
+{
+  "name": "history-lab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "History Lab — a schema-2 Anna App: replay a pivotal historical decision and fact-check the AI to win.",
+  "scripts": {
+    "dev": "anna-app dev",
+    "dev:off": "anna-app dev --no-llm",
+    "dev:mock": "anna-app dev --mock-llm fixtures/cuban-missile.jsonl",
+    "validate": "anna-app validate --strict",
+    "doctor": "anna-app doctor",
+    "test": "node tests/logic.test.mjs"
+  },
+  "devDependencies": {
+    "@anna-ai/cli": "^0.1.22"
+  }
+}
