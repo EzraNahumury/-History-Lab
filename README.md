@@ -2,6 +2,8 @@
 
 > **Replay a pivotal moment in history as a branching, illustrated decision game — where fact-checking the AI is the game.**
 
+> 🎥 **Watch the 2-minute demo → https://youtu.be/iwHemJRhVRs** &nbsp;·&nbsp; live on Anna (v0.1.0)
+
 An **Anna App** (schema-2) built for the **Anna AI-Native App Hackathon**. You step into a real historical decision (the Cuban Missile Crisis, a Roman Senate vote, the Apollo 11 go/no-go), the AI streams an illustrated scene and three grounded choices — and before the timeline can advance, **you** must ratify or reject its *"Historian's Ruling."* Catching the model when it's wrong isn't a side feature; it's the win condition.
 
 > **One line:** *AI generates, the human ratifies, Anna remembers.*
@@ -570,6 +572,8 @@ flowchart LR
 ---
 
 ## 📝 Submission description
+
+> 🎥 **Demo video:** https://youtu.be/iwHemJRhVRs &nbsp;·&nbsp; 📦 **Code:** https://github.com/EzraNahumury/-History-Lab &nbsp;·&nbsp; ⚙️ **Runs on Anna** (v0.1.0, app_id 111)
 
 **History Lab** is an Anna App that turns a pivotal historical moment into a branching, illustrated decision game — and makes **fact-checking the AI the core mechanic.** You `#`-mention the app and pick a scenario (e.g. the Cuban Missile Crisis, 1962). Anna's host agent (`agent.session.run`) streams a grounded opening scene while the host generates period-accurate art (`image.generate`) — **no API or image key, billed to your own quota.** The agent offers three real options. When you choose, it proposes a *"Historian's Ruling"* — was this plausible, and what really happened? Acting as the reviewing historian, you **Approve** the ruling or **Flag** it as a hallucination; only approved rulings commit to `storage` and advance the canonical timeline, while your accuracy score updates live in the window title.
 
